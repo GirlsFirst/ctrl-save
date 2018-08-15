@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Final Project</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+  </head>
+
+  <body>
+
+    <script type="text/javascript">
+
+      var config = {
+          type: Phaser.AUTO,
+          width: 800,
+          height: 600,
+          physics: {
+              default: 'arcade',
+              arcade: {
+                  gravity: { y: 100 },
+                  debug: false
+              }
+          },
+          scene: {
+              preload: preload,
+              create: create,
+              update: update
+          }
+      };
+
+      var turtle;
+      var plants;
+      var plastics;
+      var cursors;
+      var score = 0;
+      var itsOver = false;
+      var scoreName;
+
+      var game = new Phaser.Game(config);
+
+      function preload ()
+      {
+        this.load.image('sea', 'sea.jpg');
+        this.load.image('plants', 'plant.gif');
+        this.load.image('plastics', 'plastic.gif');
+        this.load.image('turtle', 'turtle.png');
+      }
+
+      function create ()
+        {
+          this.add.image(400, 300, 'sea');
+
+          turtle = this.physics.add.sprite(400, 0, 'turtle');
+
+          turtle.setBounce(0.2);
+          turtle.setCollideWorldBounds(true);
+
+          food = this.physics.add.group({
+            key: 'plants',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 70 }
+          });
+
+          food.children.iterate(function (child) {
+
+              //  Give each star a slightly different bounce
+              child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+          });
+
+          plastics = this.physics.add.group({
+            key: 'plastics',
+            repeat: 2,
+            setXY: { x: 200, y: 0, stepX: 70 }
+          });
+
+
+          plastics.children.iterate(function (child) {
+
+              //  Give each star a slightly different bounce
+              child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+          });
+
+          cursors = this.input.keyboard.createCursorKeys();
+
+          scoreName= this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+          this.physics.add.overlap(turtle, food, collectFood, null, this);
+
+          this.physics.add.collider(turtle, plastics, collectPlastics, null, this);
+      }
+
+      function update ()
+        {
+          if (itsOver)
+          {
+              return;
+          }
+          if (cursors.left.isDown)
+          {
+              turtle.setVelocityX(-200);
+          }
+          else if (cursors.right.isDown)
+          {
+              turtle.setVelocityX(200);
+          }
+          else
+          {
+              turtle.setVelocityX(0);
+          }
+
+          if (cursors.up.isDown && turtle.body.touching.down)
+          {
+              turtle.setVelocityY(200);
+          }
+        }
+
+        function collectFood (turtle, food)
+        {
+          food.disableBody(true, true);
+
+          score += 1;
+          scoreName.setText('Score: ' + score);
+        }
+
+      function collectPlastics (turtle, plastics)
+      {
+        plastics.disableBody(true, true);
+
+        score += 1;
+        scoreName.setText('Score: ' + score);
+
+      }
+
+    </script>
+
+  </body>
+
+</html>

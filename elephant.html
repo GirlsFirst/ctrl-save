@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="infoPage.css">
+    <meta charset="UTF-8" />
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: auto;
+            width: 62%;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var elephant;
+var plants;
+var poisons;
+var platforms;
+var floor;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+var gameisOver;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sunset', 'sunset.jpg');
+    this.load.image('ribbon', 'green.gif');
+    this.load.image('plant', 'orange.gif');
+    this.load.image('poison', 'orange.gif');
+    this.load.image('floor', 'platforms.png');
+    this.load.image('gameisOver', 'gameover.png');
+    this.load.image('elephant', 'elephant.gif');
+}
+
+function create ()
+{
+    this.add.image(400, 300, 'sunset');
+
+    platforms = this.physics.add.staticGroup();
+    gameisOver = this.physics.add.staticGroup();
+
+    platforms.create(400, 588, 'floor').setScale(2).refreshBody();
+
+    platforms.create(300, 400, 'ribbon').setScale(0.7).refreshBody();
+    platforms.create(50, 300, 'ribbon').setScale(0.7).refreshBody();
+    platforms.create(750, 300, 'ribbon').setScale(0.7).refreshBody();
+    platforms.create(550, 450, 'ribbon').setScale(0.7).refreshBody();
+    platforms.create(400, 200, 'ribbon').setScale(0.7).refreshBody();
+
+    elephant = this.physics.add.sprite(100, 450, 'elephant');
+
+    elephant.setBounce(0.2);
+    elephant.setCollideWorldBounds(true);
+
+    cursors = this.input.keyboard.createCursorKeys();
+
+    plants = this.physics.add.group({
+        key: 'plant',
+        repeat: 9,
+        setXY: { x: 12, y: 0, stepX: 90 }
+    });
+
+    plants.children.iterate(function (child) {
+
+        child.setBounce(1);
+        child.setCollideWorldBounds(true);
+        child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        child.allowGravity = false;
+
+    });
+
+    poisons = this.physics.add.group();
+
+    scoreText = this.add.text(650, 16, 'score: 0', { fontSize: '24px', fill: '#000' });
+    this.add.text(16, 16, 'collect items', { fontSize: '24px', fill: '#000' })
+
+    this.physics.add.collider(elephant, platforms);
+    this.physics.add.collider(plants, platforms);
+    this.physics.add.collider(poisons, platforms);
+
+    this.physics.add.overlap(elephant, plants, collectPlant, null, this);
+
+    this.physics.add.collider(elephant, poisons, collectPoison, null, this);
+}
+
+function update ()
+{
+    if (gameOver)
+    {
+        return;
+    }
+
+    if (cursors.left.isDown)
+    {
+        elephant.setVelocityX(-160);
+
+    }
+    else if (cursors.right.isDown)
+    {
+        elephant.setVelocityX(160);
+
+    }
+    else
+    {
+        elephant.setVelocityX(0);
+
+    }
+
+    if (cursors.up.isDown && elephant.body.touching.down)
+    {
+        elephant.setVelocityY(-330);
+    }
+}
+
+function collectPlant (elephant, plant)
+{
+    plant.disableBody(true, true);
+
+    score += 5;
+    scoreText.setText('Score: ' + score);
+
+    if (plants.countActive(true) === 0)
+    {
+        plants.children.iterate(function (child) {
+
+            child.enableBody(true, child.x, 0, true, true);
+            child.setBounce(1);
+            child.setCollideWorldBounds(true);
+            child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            child.allowGravity = false;
+
+        });
+
+        var x = (elephant.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var poison = poisons.create(x, 16, 'poison');
+        poison.setBounce(1);
+        poison.setCollideWorldBounds(true);
+        poison.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        poison.allowGravity = false;
+
+    }
+}
+
+function collectPoison (elephant, poison)
+{
+    this.physics.pause();
+
+    gameisOver.create(400, 300, 'gameisOver').setScale(0.5).refreshBody();
+
+    elephant.setTint(0xf8000);
+
+    gameOver = true;
+
+    setTimeout(timedelay, 2000);
+}
+
+function timedelay()
+{
+document.location.href = 'game over elephant.html'
+}
+
+</script>
+
+</body>
+</html>

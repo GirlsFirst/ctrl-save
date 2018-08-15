@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="infoPage.css">
+    <meta charset="UTF-8" />
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: auto;
+            width: 62%;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var bee;
+var pollens;
+var bugs;
+var flower;
+var platform;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+var gameisOver;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sea', 'sea.jpg');
+    this.load.image('flower', 'flower.png');
+    this.load.image('pollen', 'pollen.gif');
+    this.load.image('bugs', 'bugs.gif');
+    this.load.image('platform', 'platform2.png');
+    this.load.image('gameisOver', 'gameover.png');
+    this.load.spritesheet('bee', 'beesheet.png', { frameWidth: 28, frameHeight: 25.3 });
+}
+
+function create ()
+{
+    this.add.image(400, 300, 'sea');
+
+    flower = this.physics.add.staticGroup();
+    gameisOver = this.physics.add.staticGroup();
+
+    flower.create(400, 588, 'platform').setScale(1).refreshBody();
+
+    flower.create(300, 400, 'flower').setScale(0.1).refreshBody();
+    flower.create(50, 300, 'flower').setScale(0.1).refreshBody();
+    flower.create(750, 300, 'flower').setScale(0.1).refreshBody();
+    flower.create(550, 450, 'flower').setScale(0.1).refreshBody();
+    flower.create(400, 200, 'flower').setScale(0.1).refreshBody();
+
+    bee = this.physics.add.sprite(100, 450, 'bee');
+
+    bee.setBounce(0.2);
+    bee.setCollideWorldBounds(true);
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('bee', { start: 0, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'bee', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('bee', { start: 0, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    cursors = this.input.keyboard.createCursorKeys();
+
+    pollens = this.physics.add.group({
+        key: 'pollen',
+        repeat: 9,
+        setXY: { x: 12, y: 0, stepX: 90 }
+    });
+
+    pollens.children.iterate(function (child) {
+
+        child.setBounce(1);
+        child.setCollideWorldBounds(true);
+        child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        child.allowGravity = false;
+
+    });
+
+    bugs = this.physics.add.group();
+
+    scoreText = this.add.text(650, 16, 'score: 0', { fontSize: '24px', fill: '#000' });
+    this.add.text(16, 16, 'collect items', { fontSize: '24px', fill: '#000' })
+
+    this.physics.add.collider(bee, flower);
+    this.physics.add.collider(pollens, flower);
+    this.physics.add.collider(bugs, flower);
+
+    this.physics.add.overlap(bee, pollens, collectpollen, null, this);
+
+    this.physics.add.collider(bee, bugs, collectbugs, null, this);
+}
+
+function update ()
+{
+    if (gameOver)
+    {
+        return;
+    }
+
+    if (cursors.left.isDown)
+    {
+        bee.setVelocityX(-160);
+
+        bee.anims.play('left', true);
+
+    }
+    else if (cursors.right.isDown)
+    {
+        bee.setVelocityX(160);
+
+        bee.anims.play('right', true);
+    }
+    else
+    {
+        bee.setVelocityX(0);
+
+        bee.anims.play('turn');
+    }
+
+    if (cursors.up.isDown && bee.body.touching.down)
+    {
+        bee.setVelocityY(-330);
+    }
+}
+
+function collectpollen (bee, pollen)
+{
+    pollen.disableBody(true, true);
+
+    score += 5;
+    scoreText.setText('Score: ' + score);
+
+    if (pollens.countActive(true) === 0)
+    {
+        pollens.children.iterate(function (child) {
+
+            child.enableBody(true, child.x, 0, true, true);
+            child.setBounce(1);
+            child.setCollideWorldBounds(true);
+            child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            child.allowGravity = false;
+
+        });
+
+        var x = (bee.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var bug = bugs.create(x, 16, 'bugs');
+        bug.setBounce(1);
+        bug.setCollideWorldBounds(true);
+        bug.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        bug.allowGravity = false;
+
+    }
+}
+
+function collectbugs (bee, bugs)
+{
+    this.physics.pause();
+
+    gameisOver.create(400, 300, 'gameisOver').setScale(0.2).refreshBody();
+
+    bee.setTint(0xf8000);
+
+    bee.anims.play('turn');
+
+    gameOver = true;
+
+    setTimeout(timedelay, 2000);
+}
+
+function timedelay()
+{
+document.location.href = 'game over bee.html'
+}
+
+</script>
+
+</body>
+</html>

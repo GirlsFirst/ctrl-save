@@ -1,0 +1,28 @@
+body{
+   background-image: url("back.jpg");
+   color: white;
+     font-size: 145%s
+}
+.earth{
+  background: transparent;
+  border: none;
+}
+.turtle{
+  background: transparent;
+  border: none;
+}
+.elephant{
+  background: transparent;
+  border: none;
+}
+.bee{
+  background: transparent;
+  border: none;
+}
+.rhino{
+  background: transparent;
+  border:none;
+}
+.dotted{
+  color: Hotpink ;
+}

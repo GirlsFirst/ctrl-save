@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="infoPage.css">
+    <meta charset="UTF-8" />
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: auto;
+            width: 62%;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var turtle;
+var plants;
+var plastics;
+var platforms;
+var floor;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+var gameisOver;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sea', 'purplewater.jpg');
+    this.load.image('coral', 'coral.png');
+    this.load.image('plant', 'plants.gif');
+    this.load.image('plastic', 'plants.gif');
+    this.load.image('floor', 'platforms.png');
+    this.load.image('gameisOver', 'gameover.png');
+    this.load.spritesheet('turtle', 'turtlesheet.png', { frameWidth: 48, frameHeight: 48 });
+}
+
+function create ()
+{
+    this.add.image(400, 300, 'sea');
+
+    platforms = this.physics.add.staticGroup();
+    gameisOver = this.physics.add.staticGroup();
+
+    platforms.create(400, 588, 'floor').setScale(2).refreshBody();
+
+    platforms.create(300, 400, 'coral').setScale(0.2).refreshBody();
+    platforms.create(50, 300, 'coral').setScale(0.2).refreshBody();
+    platforms.create(750, 300, 'coral').setScale(0.2).refreshBody();
+    platforms.create(550, 450, 'coral').setScale(0.2).refreshBody();
+    platforms.create(400, 200, 'coral').setScale(0.2).refreshBody();
+
+    turtle = this.physics.add.sprite(100, 450, 'turtle');
+
+    turtle.setBounce(0.2);
+    turtle.setCollideWorldBounds(true);
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('turtle', { start: 13, end: 21 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'turtle', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('turtle', { start: 25, end: 33 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    cursors = this.input.keyboard.createCursorKeys();
+
+    plants = this.physics.add.group({
+        key: 'plant',
+        repeat: 9,
+        setXY: { x: 12, y: 0, stepX: 90 }
+    });
+
+    plants.children.iterate(function (child) {
+
+        child.setBounce(1);
+        child.setCollideWorldBounds(true);
+        child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        child.allowGravity = false;
+
+    });
+
+    plastics = this.physics.add.group();
+
+    scoreText = this.add.text(650, 16, 'score: 0', { fontSize: '24px', fill: '#000' });
+    this.add.text(16, 16, 'collect items', { fontSize: '24px', fill: '#000' })
+
+    this.physics.add.collider(turtle, platforms);
+    this.physics.add.collider(plants, platforms);
+    this.physics.add.collider(plastics, platforms);
+
+    this.physics.add.overlap(turtle, plants, collectPlant, null, this);
+
+    this.physics.add.collider(turtle, plastics, collectPlastic, null, this);
+}
+
+function update ()
+{
+    if (gameOver)
+    {
+        return;
+    }
+
+    if (cursors.left.isDown)
+    {
+        turtle.setVelocityX(-160);
+
+        turtle.anims.play('left', true);
+
+    }
+    else if (cursors.right.isDown)
+    {
+        turtle.setVelocityX(160);
+
+        turtle.anims.play('right', true);
+    }
+    else
+    {
+        turtle.setVelocityX(0);
+
+        turtle.anims.play('turn');
+    }
+
+    if (cursors.up.isDown && turtle.body.touching.down)
+    {
+        turtle.setVelocityY(-330);
+    }
+}
+
+function collectPlant (turtle, plant)
+{
+    plant.disableBody(true, true);
+
+    score += 5;
+    scoreText.setText('Score: ' + score);
+
+    if (plants.countActive(true) === 0)
+    {
+        plants.children.iterate(function (child) {
+
+            child.enableBody(true, child.x, 0, true, true);
+            child.setBounce(1);
+            child.setCollideWorldBounds(true);
+            child.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            child.allowGravity = false;
+
+        });
+
+        var x = (turtle.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var plastic = plastics.create(x, 16, 'plastic');
+        plastic.setBounce(1);
+        plastic.setCollideWorldBounds(true);
+        plastic.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        plastic.allowGravity = false;
+
+    }
+}
+
+function collectPlastic (turtle, plastic)
+{
+    this.physics.pause();
+
+    gameisOver.create(400, 300, 'gameisOver').setScale(0.5).refreshBody();
+
+    turtle.setTint(0xf8000);
+
+    turtle.anims.play('turn');
+
+    gameOver = true;
+
+    setTimeout(timedelay, 2000);
+}
+
+function timedelay()
+{
+  document.location.href = 'game over.html'
+}
+</script>
+
+</body>
+</html>
